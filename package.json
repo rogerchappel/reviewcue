@@ -15,7 +15,8 @@
     "docs",
     "fixtures",
     "scripts",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
@@ -39,5 +40,13 @@
     "@types/node": "^25.9.1",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rogerchappel/reviewcue.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/reviewcue/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/reviewcue#readme"
 }
