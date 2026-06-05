@@ -3,19 +3,20 @@
   "version": "0.1.0",
   "description": "Local-first review packet builder for git diffs.",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/src/index.js",
   "bin": {
-    "reviewcue": "./dist/cli.js"
+    "reviewcue": "./dist/src/cli.js"
   },
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/src/index.js"
   },
   "files": [
     "dist",
     "docs",
     "fixtures",
     "scripts",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
@@ -39,5 +40,13 @@
     "@types/node": "^25.9.1",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rogerchappel/reviewcue.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/reviewcue/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/reviewcue#readme"
 }
