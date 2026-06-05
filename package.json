@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "description": "Local-first review packet builder for git diffs.",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/src/index.js",
   "bin": {
-    "reviewcue": "./dist/cli.js"
+    "reviewcue": "./dist/src/cli.js"
   },
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/src/index.js"
   },
   "files": [
     "dist",
