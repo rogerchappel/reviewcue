@@ -43,7 +43,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rogerchappel/reviewcue.git"
+    "url": "git+https://github.com/rogerchappel/reviewcue.git"
   },
   "bugs": {
     "url": "https://github.com/rogerchappel/reviewcue/issues"
