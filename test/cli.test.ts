@@ -16,9 +16,11 @@ test("CLI parses the maintained diff fixture", async () => {
   const parsed = JSON.parse(stdout) as { files: Array<{ path: string; additions: number; deletions: number }> };
 
   assert.equal(parsed.files.length, 1);
-  assert.equal(parsed.files[0].path, "README.md");
-  assert.equal(parsed.files[0].additions, 1);
-  assert.equal(parsed.files[0].deletions, 0);
+  const [file] = parsed.files;
+  assert.ok(file);
+  assert.equal(file.path, "README.md");
+  assert.equal(file.additions, 1);
+  assert.equal(file.deletions, 0);
 });
 
 test("CLI rejects incomplete diff commands", async () => {
