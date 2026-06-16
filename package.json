@@ -40,6 +40,9 @@
   ],
   "author": "Roger Chappel",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "@types/node": "^25.9.1",
     "tsx": "^4.22.3",
