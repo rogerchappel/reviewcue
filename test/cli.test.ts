@@ -9,6 +9,7 @@ test("CLI help describes the diff command", async () => {
   const { stdout } = await execFileAsync(process.execPath, ["dist/src/cli.js", "--help"]);
 
   assert.match(stdout, /reviewcue diff <patch\.diff>/);
+  assert.match(stdout, /reviewcue pack/);
 });
 
 test("CLI parses the maintained diff fixture", async () => {
@@ -32,4 +33,18 @@ test("CLI rejects incomplete diff commands", async () => {
       return true;
     },
   );
+});
+
+test("CLI renders a packet from staged fixture repo changes", async () => {
+  const { stdout } = await execFileAsync(process.execPath, [
+    "dist/src/cli.js",
+    "pack",
+    "--format",
+    "json",
+    "--staged"
+  ]);
+  const parsed = JSON.parse(stdout) as { summary: { filesChanged: number }; questions: string[] };
+
+  assert.equal(parsed.summary.filesChanged, 0);
+  assert.ok(parsed.questions.length > 0);
 });
