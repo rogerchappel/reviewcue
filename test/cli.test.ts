@@ -12,6 +12,12 @@ test("CLI help describes the diff command", async () => {
   assert.match(stdout, /reviewcue pack/);
 });
 
+test("CLI prints the package version", async () => {
+  const { stdout } = await execFileAsync(process.execPath, ["dist/src/cli.js", "--version"]);
+
+  assert.equal(stdout.trim(), "0.1.0");
+});
+
 test("CLI parses the maintained diff fixture", async () => {
   const { stdout } = await execFileAsync(process.execPath, ["dist/src/cli.js", "diff", "fixtures/basic.diff"]);
   const parsed = JSON.parse(stdout) as { files: Array<{ path: string; additions: number; deletions: number }> };
@@ -30,6 +36,18 @@ test("CLI rejects incomplete diff commands", async () => {
     (error: unknown) => {
       assert.equal((error as { code?: number }).code, 2);
       assert.match((error as { stderr?: string }).stderr ?? "", /expected diff/);
+      return true;
+    },
+  );
+});
+
+test("CLI reports unknown commands with help", async () => {
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/src/cli.js", "unknown"]),
+    (error: unknown) => {
+      assert.equal((error as { code?: number }).code, 2);
+      assert.match((error as { stderr?: string }).stderr ?? "", /unknown command "unknown"/);
+      assert.match((error as { stderr?: string }).stderr ?? "", /reviewcue diff <patch\.diff>/);
       return true;
     },
   );
