@@ -4,6 +4,7 @@ import { parseDiff } from "./diff.js";
 import { parseArgs, readBooleanFlag, readFormat, readStringFlag } from "./args.js";
 import { collectDiff, listTrackedFiles, resolveRepoPath } from "./git.js";
 import { buildPacket, renderPacket } from "./packet.js";
+import { VERSION } from "./version.js";
 
 async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(argv);
@@ -11,6 +12,11 @@ async function main(argv = process.argv.slice(2)) {
 
   if (!command || command === "help" || command === "--help" || command === "-h") {
     process.stdout.write(help());
+    return 0;
+  }
+
+  if (command === "--version" || command === "-v") {
+    process.stdout.write(`${VERSION}\n`);
     return 0;
   }
 
@@ -64,10 +70,8 @@ async function main(argv = process.argv.slice(2)) {
     return 0;
   }
 
-  if (command !== "diff") {
-    process.stderr.write("reviewcue: expected diff <patch.diff>\n");
-    return 2;
-  }
+  process.stderr.write(`reviewcue: unknown command "${command}"\n\n${help()}`);
+  return 2;
 }
 
 function help(): string {
