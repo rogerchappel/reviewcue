@@ -26,6 +26,13 @@ Parse a unified diff into review-ready JSON:
 node dist/src/cli.js diff fixtures/basic.diff
 ```
 
+Check the installed command surface:
+
+```sh
+node dist/src/cli.js --help
+node dist/src/cli.js --version
+```
+
 Build a Markdown handoff packet from a branch diff:
 
 ```sh
@@ -79,6 +86,14 @@ npm run release:check
 built CLI. You can also run `bash scripts/validate.sh` for the repository
 validation helper.
 
+## Limitations
+
+- `reviewcue` reads local git state only; it does not fetch remotes or inspect
+  GitHub checks.
+- Review packets are deterministic summaries, not automated approvals.
+- Secret and risky-command cues are heuristic. Keep human review in the loop
+  for high-risk changes.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution expectations. Changes
@@ -87,9 +102,8 @@ should be small, reviewable, and verified before review.
 ## Security
 
 See [SECURITY.md](SECURITY.md) for vulnerability reporting guidance. Replace
-the default security policy before publishing the generated repository.
-
-These links assume this README has been copied to the generated repository root.
+the default security policy before publishing a package or promoting the tool
+for external contributors.
 
 ## License
 
