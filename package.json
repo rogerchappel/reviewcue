@@ -31,9 +31,10 @@
     "check": "tsc --noEmit",
     "test": "npm run build && tsx --test test/*.test.ts",
     "smoke": "bash scripts/smoke.sh",
-    "package:smoke": "npm run build && test -f ./dist/src/cli.js && node dist/src/cli.js --version && npm pack --dry-run",
+    "package:smoke": "npm run build && npm run bin:smoke && npm pack --dry-run",
     "release:check": "npm test && npm run check && npm run build && npm run smoke && npm run package:smoke",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "bin:smoke": "node -e \"const fs=require('node:fs'); const p=require('./package.json'); const bins=typeof p.bin==='string'?{[p.name]:p.bin}:p.bin||{}; for (const [name,target] of Object.entries(bins)) { if (!fs.existsSync(target)) { console.error(name + ' bin target missing: ' + target); process.exit(1); } }\""
   },
   "keywords": [
     "code-review",
