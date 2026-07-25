@@ -1,0 +1,27 @@
+diff --git "a/docs/my file.md" "b/docs/my file.md"
+index 1111111..2222222 100644
+--- "a/docs/my file.md"
++++ "b/docs/my file.md"
+@@ -1 +1 @@
+-old
++new
+diff --git "a/docs/old\040name.txt" "b/docs/new\040name.txt"
+similarity index 100%
+rename from "docs/old\040name.txt"
+rename to "docs/new\040name.txt"
+diff --git "a/data/source\tname.txt" "b/data/copy\tname.txt"
+similarity index 100%
+copy from "data/source\tname.txt"
+copy to "data/copy\tname.txt"
+diff --git /dev/null "b/notes/new file.txt"
+new file mode 100644
+--- /dev/null
++++ "b/notes/new file.txt"
+@@ -0,0 +1 @@
++added
+diff --git "a/old/deleted file.txt" /dev/null
+deleted file mode 100644
+--- "a/old/deleted file.txt"
++++ /dev/null
+@@ -1 +0,0 @@
+-deleted
