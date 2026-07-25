@@ -26,6 +26,9 @@ Parse a unified diff into review-ready JSON:
 node dist/src/cli.js diff fixtures/basic.diff
 ```
 
+Git-quoted paths are decoded in the JSON output, including spaces, escape
+sequences, and the old/new paths recorded for renames and copies.
+
 Check the installed command surface:
 
 ```sh
