@@ -2,6 +2,13 @@ import type { OutputFormat, ParsedArgs } from "./types.js";
 
 const booleanFlags = new Set(["staged", "help", "version"]);
 
+export interface ArgumentContract {
+  stringFlags?: readonly string[];
+  booleanFlags?: readonly string[];
+  minPositionals?: number;
+  maxPositionals: number;
+}
+
 export function parseArgs(argv: string[]): ParsedArgs {
   const [command, ...rest] = argv;
   const flags = new Map<string, string | boolean>();
@@ -21,7 +28,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     const withoutPrefix = token.slice(2);
     const [rawName, inlineValue] = withoutPrefix.split("=", 2);
     const name = rawName ?? "";
-    if (booleanFlags.has(name)) {
+    if (booleanFlags.has(name) && inlineValue === undefined) {
       flags.set(name, true);
       continue;
     }
@@ -42,6 +49,32 @@ export function parseArgs(argv: string[]): ParsedArgs {
   }
 
   return { command, positionals, flags };
+}
+
+export function validateArgs(args: ParsedArgs, contract: ArgumentContract): string | undefined {
+  const command = args.command ?? "command";
+  const stringFlags = new Set(contract.stringFlags ?? []);
+  const allowedFlags = new Set([...stringFlags, ...(contract.booleanFlags ?? [])]);
+
+  for (const [name, value] of args.flags) {
+    if (!allowedFlags.has(name)) {
+      return `${command}: unknown option "--${name}"`;
+    }
+    if (stringFlags.has(name) && (typeof value !== "string" || value.length === 0)) {
+      return `${command}: option "--${name}" requires a value`;
+    }
+    if (!stringFlags.has(name) && value !== true) {
+      return `${command}: option "--${name}" does not accept a value`;
+    }
+  }
+
+  if (args.positionals.length > contract.maxPositionals) {
+    return `${command}: unexpected argument "${args.positionals[contract.maxPositionals]}"`;
+  }
+  if (args.positionals.length < (contract.minPositionals ?? 0)) {
+    return command === "diff" ? "expected diff <patch.diff>" : `${command}: missing required argument`;
+  }
+  return undefined;
 }
 
 export function readStringFlag(args: ParsedArgs, name: string, fallback?: string): string | undefined {

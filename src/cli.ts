@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from "node:fs/promises";
 import { parseDiff } from "./diff.js";
-import { parseArgs, readBooleanFlag, readFormat, readStringFlag } from "./args.js";
+import { parseArgs, readBooleanFlag, readFormat, readStringFlag, validateArgs } from "./args.js";
 import { collectDiff, listTrackedFiles, resolveRepoPath } from "./git.js";
 import { buildPacket, renderPacket } from "./packet.js";
 import { VERSION } from "./version.js";
@@ -21,17 +21,22 @@ async function main(argv = process.argv.slice(2)) {
   }
 
   if (command === "diff") {
+    const usageError = validateArgs(args, { maxPositionals: 1, minPositionals: 1 });
+    if (usageError) return reportUsageError(usageError);
     const [file] = args.positionals;
-    if (!file) {
-      process.stderr.write("reviewcue: expected diff <patch.diff>\n");
-      return 2;
-    }
+    if (!file) return reportUsageError("expected diff <patch.diff>");
     const parsed = parseDiff(await readFile(file, "utf8"));
     process.stdout.write(`${JSON.stringify({ files: parsed }, null, 2)}\n`);
     return 0;
   }
 
   if (command === "pack") {
+    const usageError = validateArgs(args, {
+      stringFlags: ["base", "format", "out", "cwd"],
+      booleanFlags: ["staged"],
+      maxPositionals: 0
+    });
+    if (usageError) return reportUsageError(usageError);
     const cwd = resolveRepoPath(readStringFlag(args, "cwd", process.cwd()) ?? process.cwd());
     const format = readFormat(args, "markdown");
     const packet = buildPacket({
@@ -47,6 +52,12 @@ async function main(argv = process.argv.slice(2)) {
   }
 
   if (command === "cues") {
+    const usageError = validateArgs(args, {
+      stringFlags: ["base", "cwd"],
+      booleanFlags: ["staged"],
+      maxPositionals: 0
+    });
+    if (usageError) return reportUsageError(usageError);
     const cwd = resolveRepoPath(readStringFlag(args, "cwd", process.cwd()) ?? process.cwd());
     const packet = buildPacket({
       cwd,
@@ -58,6 +69,12 @@ async function main(argv = process.argv.slice(2)) {
   }
 
   if (command === "inspect") {
+    const usageError = validateArgs(args, {
+      stringFlags: ["base"],
+      booleanFlags: ["staged"],
+      maxPositionals: 1
+    });
+    if (usageError) return reportUsageError(usageError);
     const [target = process.cwd()] = args.positionals;
     const cwd = resolveRepoPath(target);
     const diffText = collectDiff({
@@ -71,6 +88,11 @@ async function main(argv = process.argv.slice(2)) {
   }
 
   process.stderr.write(`reviewcue: unknown command "${command}"\n\n${help()}`);
+  return 2;
+}
+
+function reportUsageError(message: string): 2 {
+  process.stderr.write(`reviewcue: ${message}\n`);
   return 2;
 }
 

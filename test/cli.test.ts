@@ -5,6 +5,17 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
+async function rejectsWithUsage(args: string[], message: RegExp) {
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/src/cli.js", ...args]),
+    (error: unknown) => {
+      assert.equal((error as { code?: number }).code, 2);
+      assert.match((error as { stderr?: string }).stderr ?? "", message);
+      return true;
+    },
+  );
+}
+
 test("CLI help describes the diff command", async () => {
   const { stdout } = await execFileAsync(process.execPath, ["dist/src/cli.js", "--help"]);
 
@@ -31,14 +42,23 @@ test("CLI parses the maintained diff fixture", async () => {
 });
 
 test("CLI rejects incomplete diff commands", async () => {
-  await assert.rejects(
-    execFileAsync(process.execPath, ["dist/src/cli.js", "diff"]),
-    (error: unknown) => {
-      assert.equal((error as { code?: number }).code, 2);
-      assert.match((error as { stderr?: string }).stderr ?? "", /expected diff/);
-      return true;
-    },
-  );
+  await rejectsWithUsage(["diff"], /expected diff/);
+});
+
+test("CLI rejects unknown options", async () => {
+  await rejectsWithUsage(["diff", "fixtures/basic.diff", "--bogus"], /diff: unknown option "--bogus"/);
+});
+
+test("CLI rejects missing string option values", async () => {
+  await rejectsWithUsage(["diff", "fixtures/basic.diff", "--format"], /diff: unknown option "--format"/);
+  await rejectsWithUsage(["pack", "--staged", "--out"], /pack: option "--out" requires a value/);
+});
+
+test("CLI rejects extra positional arguments", async () => {
+  await rejectsWithUsage(["diff", "fixtures/basic.diff", "unexpected"], /diff: unexpected argument "unexpected"/);
+  await rejectsWithUsage(["pack", "unexpected"], /pack: unexpected argument "unexpected"/);
+  await rejectsWithUsage(["cues", "unexpected"], /cues: unexpected argument "unexpected"/);
+  await rejectsWithUsage(["inspect", ".", "unexpected"], /inspect: unexpected argument "unexpected"/);
 });
 
 test("CLI reports unknown commands with help", async () => {
@@ -65,4 +85,16 @@ test("CLI renders a packet from staged fixture repo changes", async () => {
 
   assert.equal(parsed.summary.filesChanged, 0);
   assert.ok(parsed.questions.length > 0);
+});
+
+test("CLI accepts valid diff, pack, cues, and inspect invocations", async () => {
+  const diff = await execFileAsync(process.execPath, ["dist/src/cli.js", "diff", "fixtures/basic.diff"]);
+  const pack = await execFileAsync(process.execPath, ["dist/src/cli.js", "pack", "--staged", "--format=json"]);
+  const cues = await execFileAsync(process.execPath, ["dist/src/cli.js", "cues", "--staged", "--base=main"]);
+  const inspect = await execFileAsync(process.execPath, ["dist/src/cli.js", "inspect", ".", "--staged"]);
+
+  assert.equal(JSON.parse(diff.stdout).files.length, 1);
+  assert.equal(JSON.parse(pack.stdout).summary.filesChanged, 0);
+  assert.ok(Array.isArray(JSON.parse(cues.stdout).cues));
+  assert.equal(JSON.parse(inspect.stdout).repository, process.cwd());
 });
