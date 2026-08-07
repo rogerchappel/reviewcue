@@ -49,7 +49,8 @@ node dist/src/cli.js pack --staged --format json
 node dist/src/cli.js cues --staged
 ```
 
-`reviewcue` detects changed files, related tests/docs/config/package files,
+`reviewcue` detects changed files, matching tests (including tests changed in
+the diff), related docs/config/package files,
 secret-looking additions, risky shell commands, lockfile changes, generated
 output, large diffs, and binary patches. It does not call a model, post PR
 comments, contact hosted services, or read untracked files unless git reports
