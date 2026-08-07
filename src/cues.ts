@@ -108,9 +108,10 @@ export function collectRelatedContext(changedFiles: ChangedFile[], trackedFiles:
   const changed = new Set(changedFiles.map((file) => file.path));
   const sourceStems = changedFiles.map((file) => stripExtension(file.path).split("/").pop()).filter(Boolean) as string[];
   const related = trackedFiles.filter((file) => !changed.has(file));
+  const tests = trackedFiles.filter((file) => isTestPath(file) && sourceStems.some((stem) => file.includes(stem)));
 
   return {
-    tests: related.filter((file) => isTestPath(file) && sourceStems.some((stem) => file.includes(stem))),
+    tests,
     docs: related.filter((file) => /\.(md|mdx|rst)$/i.test(file)),
     configs: related.filter((file) => /(^|\/)(tsconfig|eslint|prettier|vitest|jest|playwright|rollup|vite|webpack|releasebox)\b/.test(file)),
     packageFiles: related.filter((file) => /(^|\/)(package.json|package-lock.json|pnpm-lock.yaml|yarn.lock)$/.test(file))

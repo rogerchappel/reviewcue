@@ -51,3 +51,55 @@ test("renders markdown packets for agent handoff", () => {
   assert.match(markdown, /Secret-looking token added/);
   assert.match(markdown, /Reviewer Questions/);
 });
+
+test("includes a changed matching test and suppresses the missing-tests cue", () => {
+  const sourceAndTestDiff = [
+    "diff --git a/src/widget.ts b/src/widget.ts",
+    "--- a/src/widget.ts",
+    "+++ b/src/widget.ts",
+    "@@ -1 +1 @@",
+    "-export const widget = false;",
+    "+export const widget = true;",
+    "diff --git a/test/widget.test.ts b/test/widget.test.ts",
+    "--- a/test/widget.test.ts",
+    "+++ b/test/widget.test.ts",
+    "@@ -1 +1 @@",
+    "-assert.equal(widget, false);",
+    "+assert.equal(widget, true);",
+    ""
+  ].join("\n");
+
+  const packet = buildPacket({
+    cwd: process.cwd(),
+    base: "main",
+    staged: false,
+    diffText: sourceAndTestDiff,
+    trackedFiles: ["src/widget.ts", "test/widget.test.ts"]
+  });
+
+  assert.deepEqual(packet.related.tests, ["test/widget.test.ts"]);
+  assert.equal(packet.cues.some((cue) => cue.id === "missing-tests"), false);
+});
+
+test("keeps the missing-tests cue for source-only changes", () => {
+  const sourceOnlyDiff = [
+    "diff --git a/src/widget.ts b/src/widget.ts",
+    "--- a/src/widget.ts",
+    "+++ b/src/widget.ts",
+    "@@ -1 +1 @@",
+    "-export const widget = false;",
+    "+export const widget = true;",
+    ""
+  ].join("\n");
+
+  const packet = buildPacket({
+    cwd: process.cwd(),
+    base: "main",
+    staged: false,
+    diffText: sourceOnlyDiff,
+    trackedFiles: ["src/widget.ts", "test/other.test.ts"]
+  });
+
+  assert.deepEqual(packet.related.tests, []);
+  assert.equal(packet.cues.some((cue) => cue.id === "missing-tests"), true);
+});
