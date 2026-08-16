@@ -87,7 +87,10 @@ npm run release:check
 ```
 
 `npm run smoke` parses the maintained `fixtures/basic.diff` fixture through the
-built CLI. You can also run `bash scripts/validate.sh` for the repository
+built CLI. `npm run package:smoke` packs the publishable artifact, installs it
+into an isolated temporary consumer project, exercises the installed CLI, and
+imports the package through its public export. Temporary artifacts are removed
+after the check. You can also run `bash scripts/validate.sh` for the repository
 validation helper.
 
 ## Limitations
