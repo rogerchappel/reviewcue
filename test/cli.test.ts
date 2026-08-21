@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -85,6 +88,32 @@ test("CLI renders a packet from staged fixture repo changes", async () => {
 
   assert.equal(parsed.summary.filesChanged, 0);
   assert.ok(parsed.questions.length > 0);
+});
+
+test("CLI creates missing parent directories for nested output", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "reviewcue-cli-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const output = join(directory, "nested", "review.md");
+
+  await execFileAsync(process.execPath, [
+    "dist/src/cli.js",
+    "pack",
+    "--staged",
+    "--out",
+    output,
+  ]);
+
+  assert.match(await readFile(output, "utf8"), /# Review Packet:/);
+});
+
+test("CLI writes output in an existing directory", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "reviewcue-cli-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const output = join(directory, "review.md");
+
+  await execFileAsync(process.execPath, ["dist/src/cli.js", "pack", "--staged", "--out", output]);
+
+  assert.match(await readFile(output, "utf8"), /# Review Packet:/);
 });
 
 test("CLI accepts valid diff, pack, cues, and inspect invocations", async () => {
