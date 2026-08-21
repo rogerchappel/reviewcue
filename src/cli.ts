@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { parseDiff } from "./diff.js";
 import { parseArgs, readBooleanFlag, readFormat, readStringFlag, validateArgs } from "./args.js";
 import { collectDiff, listTrackedFiles, resolveRepoPath } from "./git.js";
@@ -46,7 +47,10 @@ async function main(argv = process.argv.slice(2)) {
     });
     const output = renderPacket(packet, format);
     const outPath = readStringFlag(args, "out");
-    if (outPath) await writeFile(outPath, output);
+    if (outPath) {
+      await mkdir(dirname(outPath), { recursive: true });
+      await writeFile(outPath, output);
+    }
     else process.stdout.write(output);
     return 0;
   }
