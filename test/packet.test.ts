@@ -52,6 +52,42 @@ test("renders markdown packets for agent handoff", () => {
   assert.match(markdown, /Reviewer Questions/);
 });
 
+test("keeps Markdown-significant packet values inside their documented structure", () => {
+  const packet = buildPacket({
+    cwd: process.cwd(),
+    base: "main\n## forged base",
+    staged: false,
+    diffText: diff,
+    trackedFiles: ["docs/guide.md\n## forged context"],
+    generatedAt: "2026-06-16T02:05:00.000Z"
+  });
+  packet.repository = "repo `name`\n## forged repository";
+  packet.files[0]!.path = "src/`tool`.ts\n## forged changed file";
+  packet.files[0]!.oldPath = "src/old *tool*.ts\n- forged old path";
+  packet.cues = [{
+    id: "fixture",
+    severity: "critical",
+    title: "Cue *title*\n## forged cue",
+    detail: "Review [this](https://example.com)\n- forged detail",
+    file: "src/`tool`.ts\n## forged cue path"
+  }];
+  packet.related.docs = ["docs/guide.md\n## forged related path"];
+  packet.questions = ["Check `this`?\n## forged question"];
+
+  const markdown = renderPacket(packet, "markdown");
+  assert.equal((markdown.match(/^## /gm) ?? []).length, 4);
+  assert.match(markdown, /^# Review Packet: `repo ``name`` ## forged repository`$/m);
+  assert.match(markdown, /`src\/``tool``\.ts ## forged changed file`/);
+  assert.match(markdown, /Cue \\*title\\\*<br>\\#\\# forged cue/);
+  assert.match(markdown, /Review \\[this\\]\\\(https:\/\/example\.com\\\)<br>\\- forged detail/);
+  assert.match(markdown, /Check ``this``\?<br>\\#\\# forged question/);
+
+  const json = JSON.parse(renderPacket(packet, "json"));
+  assert.equal(json.repository, packet.repository);
+  assert.equal(json.files[0].path, packet.files[0]!.path);
+  assert.equal(json.questions[0], packet.questions[0]);
+});
+
 test("includes a changed matching test and suppresses the missing-tests cue", () => {
   const sourceAndTestDiff = [
     "diff --git a/src/widget.ts b/src/widget.ts",
