@@ -76,11 +76,11 @@ test("keeps Markdown-significant packet values inside their documented structure
 
   const markdown = renderPacket(packet, "markdown");
   assert.equal((markdown.match(/^## /gm) ?? []).length, 4);
-  assert.match(markdown, /^# Review Packet: `repo ``name`` ## forged repository`$/m);
-  assert.match(markdown, /`src\/``tool``\.ts ## forged changed file`/);
-  assert.match(markdown, /Cue \\*title\\\*<br>\\#\\# forged cue/);
-  assert.match(markdown, /Review \\[this\\]\\\(https:\/\/example\.com\\\)<br>\\- forged detail/);
-  assert.match(markdown, /Check ``this``\?<br>\\#\\# forged question/);
+  assert.match(markdown, /^# Review Packet: ``repo `name` ## forged repository``$/m);
+  assert.match(markdown, /``src\/`tool`\.ts ## forged changed file``/);
+  assert.ok(markdown.includes("Cue \\*title\\*<br>\\#\\# forged cue"));
+  assert.ok(markdown.includes("Review \\[this\\]\\(https://example.com\\)<br>- forged detail"));
+  assert.ok(markdown.includes("Check \\`this\\`?<br>\\#\\# forged question"));
 
   const json = JSON.parse(renderPacket(packet, "json"));
   assert.equal(json.repository, packet.repository);

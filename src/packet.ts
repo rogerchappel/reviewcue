@@ -37,36 +37,55 @@ export function renderPacket(packet: ReviewPacket, format: OutputFormat): string
   }
 
   const lines = [
-    `# Review Packet: ${packet.repository}`,
+    `# Review Packet: ${markdownCode(packet.repository)}`,
     "",
     `- Generated: ${packet.generatedAt}`,
-    `- Base: ${packet.base}`,
+    `- Base: ${markdownCode(packet.base)}`,
     `- Mode: ${packet.staged ? "staged changes" : "base comparison"}`,
     `- Files: ${packet.summary.filesChanged}`,
     `- Lines: +${packet.summary.additions} / -${packet.summary.deletions}`,
     "",
     "## Changed Files",
     ...packet.files.flatMap((file) => [
-      `- ${file.path}${file.oldPath ? ` (renamed from ${file.oldPath})` : ""}: ${file.status}, +${file.additions}/-${file.deletions}${file.isBinary ? ", binary" : ""}`
+      `- ${markdownCode(file.path)}${file.oldPath ? ` (renamed from ${markdownCode(file.oldPath)})` : ""}: ${file.status}, +${file.additions}/-${file.deletions}${file.isBinary ? ", binary" : ""}`
     ]),
     "",
     "## Review Cues",
     ...(packet.cues.length
-      ? packet.cues.map((cue) => `- [${cue.severity}] ${cue.title}${cue.file ? ` (${cue.file})` : ""}: ${cue.detail}`)
+      ? packet.cues.map((cue) => `- [${cue.severity}] ${markdownText(cue.title)}${cue.file ? ` (${markdownCode(cue.file)})` : ""}: ${markdownText(cue.detail)}`)
       : ["- No cues detected."]),
     "",
     "## Related Context",
-    `- Tests: ${packet.related.tests.join(", ") || "none detected"}`,
-    `- Docs: ${packet.related.docs.slice(0, 12).join(", ") || "none detected"}`,
-    `- Config: ${packet.related.configs.join(", ") || "none detected"}`,
-    `- Packages: ${packet.related.packageFiles.join(", ") || "none detected"}`,
+    `- Tests: ${markdownPaths(packet.related.tests)}`,
+    `- Docs: ${markdownPaths(packet.related.docs.slice(0, 12))}`,
+    `- Config: ${markdownPaths(packet.related.configs)}`,
+    `- Packages: ${markdownPaths(packet.related.packageFiles)}`,
     "",
     "## Reviewer Questions",
-    ...packet.questions.map((question) => `- ${question}`),
+    ...packet.questions.map((question) => `- ${markdownText(question)}`),
     ""
   ];
 
   return `${lines.join("\n")}\n`;
+}
+
+function markdownCode(value: string): string {
+  const normalized = value.replace(/\r?\n|\r/g, " ");
+  const longestRun = Math.max(0, ...Array.from(normalized.matchAll(/`+/g), (match) => match[0].length));
+  const fence = "`".repeat(longestRun + 1);
+  const padding = normalized.startsWith("`") || normalized.endsWith("`") ? " " : "";
+  return `${fence}${padding}${normalized}${padding}${fence}`;
+}
+
+function markdownText(value: string): string {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/([`*_[\]{}()<>#+|])/g, "\\$1")
+    .replace(/\r?\n|\r/g, "<br>");
+}
+
+function markdownPaths(paths: string[]): string {
+  return paths.length ? paths.map(markdownCode).join(", ") : "none detected";
 }
 
 function summarize(files: ChangedFile[]): ReviewPacket["summary"] {
