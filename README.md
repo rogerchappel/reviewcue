@@ -42,6 +42,11 @@ Build a Markdown handoff packet from a branch diff:
 node dist/src/cli.js pack --base main --out tmp/review.md
 ```
 
+Markdown packets render repository names, refs, and paths as inline code and
+escape Markdown syntax in cue and question text. Embedded line breaks are kept
+inside the current heading or list item, so legal Git metadata cannot create
+extra packet sections. JSON output preserves the original values unchanged.
+
 Inspect staged changes and emit JSON for an agent run:
 
 ```sh
