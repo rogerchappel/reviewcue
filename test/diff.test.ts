@@ -9,6 +9,23 @@ test("parses added lines from a unified diff", () => {
   assert.equal(file?.additions, 1);
 });
 
+test("parses ordinary unquoted diff paths containing spaces", () => {
+  const [file] = parseDiff([
+    "diff --git a/file name.txt b/file name.txt",
+    "--- a/file name.txt",
+    "+++ b/file name.txt",
+    "@@ -1,2 +1,2 @@",
+    "-before",
+    "+after",
+    " unchanged",
+    ""
+  ].join("\n"));
+
+  assert.equal(file?.path, "file name.txt");
+  assert.equal(file?.additions, 1);
+  assert.equal(file?.deletions, 1);
+});
+
 
 test("parses renamed files and tracks the old path", () => {
   const [file] = parseDiff([
