@@ -123,6 +123,11 @@ function readMetadataPath(line: string, prefix: string): string {
 }
 
 function readPathTokens(value: string): string[] {
+  if (!value.startsWith('"')) {
+    const unquoted = readUnquotedDiffPaths(value);
+    if (unquoted) return unquoted;
+  }
+
   const paths: string[] = [];
   let offset = 0;
 
@@ -154,6 +159,21 @@ function readPathTokens(value: string): string[] {
   }
 
   return paths;
+}
+
+function readUnquotedDiffPaths(value: string): [string, string] | undefined {
+  if (!value.startsWith("a/")) return undefined;
+
+  const candidates: [string, string][] = [];
+  let separator = value.indexOf(" b/");
+  while (separator !== -1) {
+    candidates.push([value.slice(0, separator), value.slice(separator + 1)]);
+    separator = value.indexOf(" b/", separator + 1);
+  }
+
+  return candidates.find(
+    ([oldPath, newPath]) => oldPath.slice(2) === newPath.slice(2)
+  ) ?? candidates[0];
 }
 
 function decodeGitPath(value: string): string {
