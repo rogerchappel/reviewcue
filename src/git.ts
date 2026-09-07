@@ -52,10 +52,9 @@ export function listTrackedFiles(cwd: string): string[] {
     return [];
   }
 
-  return runGit(cwd, ["ls-files"])
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const output = runGit(cwd, ["ls-files", "-z"]);
+  if (output.length === 0) return [];
+  return output.slice(0, -1).split("\0");
 }
 
 export function resolveRepoPath(path: string): string {
