@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -88,6 +88,28 @@ test("CLI renders a packet from staged fixture repo changes", async () => {
 
   assert.equal(parsed.summary.filesChanged, 0);
   assert.ok(parsed.questions.length > 0);
+});
+
+test("CLI finds matching tracked tests whose filenames contain newlines", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "reviewcue-cli-repo-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  await execFileAsync("git", ["init", "-q"], { cwd: directory });
+  await mkdir(join(directory, "src"));
+  await mkdir(join(directory, "test"));
+  await writeFile(join(directory, "src", "widget.ts"), "export const widget = false;\n");
+  await writeFile(join(directory, "test", "widget\ntest.ts"), "// matching test\n");
+  await execFileAsync("git", ["add", "."], { cwd: directory });
+  await execFileAsync("git", ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.com", "commit", "-qm", "fixture"], { cwd: directory });
+  await writeFile(join(directory, "src", "widget.ts"), "export const widget = true;\n");
+  await execFileAsync("git", ["add", "src/widget.ts"], { cwd: directory });
+
+  const { stdout } = await execFileAsync(process.execPath, [
+    "dist/src/cli.js", "pack", "--staged", "--format", "json", "--cwd", directory,
+  ]);
+  const packet = JSON.parse(stdout) as { related: { tests: string[] }; cues: Array<{ id: string }> };
+
+  assert.deepEqual(packet.related.tests, ["test/widget\ntest.ts"]);
+  assert.equal(packet.cues.some((cue) => cue.id === "missing-tests"), false);
 });
 
 test("CLI creates missing parent directories for nested output", async (t) => {
