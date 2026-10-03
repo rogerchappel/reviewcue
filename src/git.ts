@@ -17,7 +17,7 @@ export function runGit(cwd: string, args: string[]): string {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`git ${args.join(" ")} failed in ${cwd}: ${message}`);
+    throw new Error(`git ${args.join(" ")} failed in ${cwd}: ${message}`, { cause: error });
   }
 }
 
