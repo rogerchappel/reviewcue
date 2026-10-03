@@ -86,6 +86,7 @@ package:
 ```sh
 npm test
 npm run check
+npm run lint
 npm run build
 npm run smoke
 npm run package:smoke
