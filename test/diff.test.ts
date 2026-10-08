@@ -27,6 +27,17 @@ test("parses ordinary unquoted diff paths containing spaces", () => {
 });
 
 
+test("rejects ambiguous unquoted diff paths instead of selecting a wrong candidate", () => {
+  const [file] = parseDiff([
+    "diff --git a/dir b/name b/other b/name",
+    "--- a/dir b/name",
+    "+++ b/other b/name",
+    ""
+  ].join("\n"));
+
+  assert.equal(file?.path, "");
+});
+
 test("parses renamed files and tracks the old path", () => {
   const [file] = parseDiff([
     "diff --git a/old.txt b/new.txt",

@@ -111,9 +111,14 @@ export function parseDiff(diffText: string): ChangedFile[] {
 }
 
 function readDiffPath(line: string): string {
-  const [oldPath = "", newPath = ""] = readPathTokens(
-    line.slice("diff --git ".length)
-  );
+  const value = line.slice("diff --git ".length);
+  const paths = value.startsWith('"')
+    ? readPathTokens(value)
+    : value.startsWith("/dev/null ")
+      ? ["/dev/null", decodeGitPath(value.slice("/dev/null ".length))]
+      : readUnquotedDiffPaths(value);
+  if (!paths || paths.length !== 2) return "";
+  const [oldPath = "", newPath = ""] = paths;
   const path = newPath === "/dev/null" ? oldPath : newPath;
   return stripPrefix(path, newPath === "/dev/null" ? "a/" : "b/");
 }
@@ -124,8 +129,7 @@ function readMetadataPath(line: string, prefix: string): string {
 
 function readPathTokens(value: string): string[] {
   if (!value.startsWith('"')) {
-    const unquoted = readUnquotedDiffPaths(value);
-    if (unquoted) return unquoted;
+    return readUnquotedDiffPaths(value) ?? [];
   }
 
   const paths: string[] = [];
@@ -164,16 +168,22 @@ function readPathTokens(value: string): string[] {
 function readUnquotedDiffPaths(value: string): [string, string] | undefined {
   if (!value.startsWith("a/")) return undefined;
 
-  const candidates: [string, string][] = [];
   let separator = value.indexOf(" b/");
+  let match: [string, string] | undefined;
+  let ambiguous = false;
   while (separator !== -1) {
-    candidates.push([value.slice(0, separator), value.slice(separator + 1)]);
+    const candidate: [string, string] = [
+      value.slice(0, separator),
+      value.slice(separator + 1)
+    ];
+    if (candidate[0].slice(2) === candidate[1].slice(2)) {
+      if (match) ambiguous = true;
+      match = candidate;
+    }
     separator = value.indexOf(" b/", separator + 1);
   }
 
-  return candidates.find(
-    ([oldPath, newPath]) => oldPath.slice(2) === newPath.slice(2)
-  ) ?? candidates[0];
+  return ambiguous ? undefined : match;
 }
 
 function decodeGitPath(value: string): string {
